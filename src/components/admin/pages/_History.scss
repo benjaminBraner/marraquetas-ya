@@ -1,0 +1,526 @@
+/* Estilos para el componente History */
+.history-container {
+  padding: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+
+/* Header con estadísticas */
+.history-header {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem
+}
+
+.history-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stat-card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.stat-card.blue {
+  background-color: #eff6ff;
+}
+
+.stat-card.green {
+  background-color: #f0fdf4;
+}
+
+.stat-card.purple {
+  background-color: #faf5ff;
+}
+
+.stat-card.orange {
+  background-color: #fff7ed;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label.blue {
+  color: #2563eb;
+}
+
+.stat-label.green {
+  color: #16a34a;
+}
+
+.stat-label.purple {
+  color: #9333ea;
+}
+
+.stat-label.orange {
+  color: #ea580c;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value.blue {
+  color: #1e3a8a;
+}
+
+.stat-value.green {
+  color: #14532d;
+}
+
+.stat-value.purple {
+  color: #581c87;
+}
+
+.stat-value.orange {
+  color: #9a3412;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+}
+
+.stat-description.blue {
+  color: #2563eb;
+}
+
+.stat-description.green {
+  color: #16a34a;
+}
+
+.stat-description.purple {
+  color: #9333ea;
+}
+
+.stat-description.orange {
+  color: #ea580c;
+}
+
+/* Stock actual */
+.stock-section {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+}
+
+.stock-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.stock-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stock-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Filtros */
+.filter-container {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  padding: 1rem;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-select {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #111827;
+  outline: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.filter-select:focus {
+  ring: 2px solid #3b82f6;
+  border-color: transparent;
+}
+
+/* Tabla */
+.table-container {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table-header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-cell {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.table-body {
+  background-color: #ffffff;
+}
+
+.table-row {
+  transition: background-color 0.15s ease-in-out;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.table-row:hover {
+  background-color: #f8fafc;
+}
+
+.table-cell {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
+  border-right: 1px solid #f9fafb;
+}
+
+.table-cell:last-child {
+  border-right: none;
+}
+
+.cell-nowrap {
+  white-space: nowrap;
+}
+
+.cell-text-sm {
+  font-size: 0.875rem;
+}
+
+.cell-text-xs {
+  font-size: 0.75rem;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.text-gray-900 {
+  color: #111827;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+/* Badges de tipo */
+.type-badge {
+  display: inline-flex;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.badge-sale {
+  color: #166534;
+  background-color: #f0fdf4;
+}
+
+.badge-withdrawal {
+  color: #991b1b;
+  background-color: #fef2f2;
+}
+
+.badge-new {
+  color: #1e40af;
+  background-color: #eff6ff;
+}
+
+.badge-addition {
+  color: #7c2d12;
+  background-color: #faf5ff;
+}
+
+/* Información de productos */
+.product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.detail-item {
+  display: inline-block;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+/* Totales */
+.total-positive {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.total-negative {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.total-neutral {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+/* Estado vacío */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .history-container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .history-header {
+    padding: 1rem;
+  }
+
+  .history-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .table-scroll {
+    font-size: 0.75rem;
+  }
+
+  .header-cell,
+  .table-cell {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+}
+
+
+/* Estilos adicionales para el botón de exportar Excel */
+
+/* Actualizar el contenedor de filtros para incluir el botón */
+.filter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  
+  /* Lado izquierdo con el filtro */
+  .filter-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
+
+/* Botón de exportar Excel */
+.export-excel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  
+  &:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+  }
+  
+  /* Iconos dentro del botón */
+  svg {
+    flex-shrink: 0;
+  }
+  
+  /* Texto del botón */
+  span {
+    font-weight: 600;
+  }
+}
+
+/* Variante alternativa con color Excel */
+.export-excel-btn.excel-style {
+  background: linear-gradient(135deg, #217346 0%, #0f5132 100%);
+  
+  &:hover {
+    background: linear-gradient(135deg, #0f5132 0%, #0a3d26 100%);
+  }
+}
+
+/* Responsive para el botón */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .export-excel-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    
+    span {
+      display: none; /* Ocultar texto en móvil, solo iconos */
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .export-excel-btn span {
+    display: inline; /* Mostrar texto de nuevo en pantallas muy pequeñas */
+    font-size: 0.8rem;
+  }
+}
+
+/* Estado de carga para el botón */
+.export-excel-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+  
+  &::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mejorar el layout del filtro container */
+.filter-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  
+  .filter-controls {
+    flex: 1;
+    justify-content: flex-start;
+  }
+}
