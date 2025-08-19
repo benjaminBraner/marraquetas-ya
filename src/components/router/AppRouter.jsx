@@ -4,19 +4,11 @@ import LoginPage from '../pages/public/LoginPage'
 import { PrivateRoutes } from '../routes/PrivateRoutes'
 import { useAuthStatus } from '../hooks/useAuthStatus'
 import { useAuthStore } from '../hooks/useAuthStore'
+import { Loader } from 'lucide-react'
 
 export const AppRouter = () => {
 	const { user, status } = useAuthStatus()
 
-	// useEffect(() => {
-	// 	const loadData = async () => {
-	// 		if (uid && role) {
-	// 			console.log(role)
-	// 		}
-	// 	}
-
-	// 	loadData()
-	// }, [uid])
 
 	if (status === 'checking') {
 		return (
@@ -28,7 +20,8 @@ export const AppRouter = () => {
 					height: '100vh'
 				}}
 			>
-				<div>Verificando autenticación...</div>
+				
+				<Loader type='progress'/>
 			</div>
 		)
 	}
