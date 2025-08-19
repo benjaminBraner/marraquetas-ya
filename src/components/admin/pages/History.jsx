@@ -3,10 +3,12 @@ import { Download, FileSpreadsheet } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useStockHistoryStore } from '../../hooks/useStockHistoryStore'
 import './_History.scss'
+import { useAuthStore } from '../../hooks/useAuthStore'
 
 export const History = () => {
 	const { history } = useStockHistoryStore()
 	const [filter, setFilter] = useState('all')
+	const {role} = useAuthStore()
 
 	// Calcular estadísticas finales
 	const finalStats = useMemo(() => {
@@ -614,16 +616,21 @@ export const History = () => {
 					</select>
 				</div>
 
-				<button 
-					onClick={exportToExcel}
-					className="export-excel-btn"
-					title="Exportar tabla a Excel"
-				>
-					<FileSpreadsheet size={16} />
-					<span>Exportar Excel</span>
-					<Download size={14} />
-				</button>
-			</div>
+				{
+					role === 'admin' && (
+								<button 
+									onClick={exportToExcel}
+									className="export-excel-btn"
+									title="Exportar tabla a Excel"
+								>
+									<FileSpreadsheet size={16} />
+									<span>Exportar Excel</span>
+									<Download size={14} />
+								</button>
+						
+					)
+				}
+				</div>
 
 			{/* Tabla mejorada de historial */}
 			<div className="table-container">

@@ -8,7 +8,7 @@ export const WorkerRoutes = () => {
 			<Route path="punto-de-venta" element={<POS />} />		
 			<Route path="historial" element={<History />} />
 
-			<Route path="*" element={<Navigate to="/venta" />} />
+			<Route path="*" element={<Navigate to="/punto-de-venta" />} />
 		</Routes>
 	)
 }
