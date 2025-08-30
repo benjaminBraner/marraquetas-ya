@@ -21,7 +21,6 @@ export const Sidebar = ({ sidebarOpen, closeSidebar, submenuOpen, toggleSubmenu,
 		}
 	}
 	
-	console.log(role)
 
 	return (
 		<>

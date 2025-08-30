@@ -1,14 +1,183 @@
 /* Estilos para el componente History */
 .history-container {
-  padding: 1.5rem;
+  padding: 1rem;
   max-width: 80rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   animation: fadeIn 0.3s;
 
+  
+  
+  // En tu archivo _History.scss
+.method-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  
+  &.qr {
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #bbdefb;
+  }
+  
+  &.cash {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+  }
+  
+  &.transfer {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+  }
+  
+  &.default {
+    background-color: #f5f5f5;
+    color: #757575;
+    border: 1px solid #e0e0e0;
+  }
+}
+  
+  
+/* Contenedor del input de fecha */
+.date-stock-history-cont {
+  // margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+  width: 100%;
+  
+  p{
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #374151;
+  }
+}
 
+/* Label para el input de fecha */
+.date-stock-history-cont label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+/* Input de fecha principal */
+.date-stock-history-cont input[type="date"] {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  background-color: #ffffff;
+  transition: all 0.2s ease-in-out;
+  min-width: 150px;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect */
+.date-stock-history-cont input[type="date"]:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+/* Focus effect */
+.date-stock-history-cont input[type="date"]:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Personalizar el calendario icon */
+.date-stock-history-cont input[type="date"]::-webkit-calendar-picker-indicator {
+  border-radius: 0.25rem;
+  background-color: #ff737f;
+  padding: 0.4rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.date-stock-history-cont input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Para navegadores Firefox */
+.date-stock-history-cont input[type="date"]::-moz-focus-inner {
+  border: 0;
+}
+
+/* Variante alternativa más moderna */
+.date-input-modern {
+  position: relative;
+  display: inline-block;
+}
+
+.date-input-modern input[type="date"] {
+  padding: 0.875rem 1.25rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: #1f2937;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 180px;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.date-input-modern input[type="date"]:hover {
+  border-color: #6366f1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.date-input-modern input[type="date"]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(99, 102, 241, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Variante con label incluido */
+.date-input-with-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 200px;
+}
+
+.date-input-with-label label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.date-input-with-label input[type="date"] {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.date-input-with-label input[type="date"]:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
 /* Header con estadísticas */
 .history-header {
   background-color: #ffffff;
@@ -189,7 +358,7 @@
 }
 
 .filter-select:focus {
-  ring: 2px solid #3b82f6;
+  // ring: 2px solid #3b82f6;
   border-color: transparent;
 }
 

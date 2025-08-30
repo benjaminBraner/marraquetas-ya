@@ -5,6 +5,12 @@
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  
+  .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+    background-color: #007bff;
+  }
 
   .modal-header {
     background: linear-gradient(135deg, #dc3545, #c82333);

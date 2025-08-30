@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore'
 import { FirestoreDB } from '../../firebase/firebase-config'
 import { getTodayDate } from '../helpers/getTodayDate'
 import { setStatus, addHistoryEntry, clearHistory } from '../store/slices/stockHistorySlice'
@@ -84,6 +84,26 @@ export const useStockHistoryStore = () => {
 		}
 	}
 
+	const getStockHistoryFromDay = async (date) => {
+		dispatch(setStatus(loadingStatus))
+		
+		try {
+			const historyRef = doc(FirestoreDB, 'history', date)
+			const historySnapshot = await getDoc(historyRef)
+			const historyData = historySnapshot.data()
+			dispatch(setStatus(idleStatus))
+			return historyData
+		} catch (error) {
+		if (error.code === 'not-found') {
+			dispatch(setStatus(idleStatus))
+			return null
+		} else {
+			dispatch(setStatus(errorStatus))
+			throw error
+		}
+		}
+	}
+	
 	return {
 		// State
 		history,
@@ -92,6 +112,7 @@ export const useStockHistoryStore = () => {
 		// Actions
 		startAddHistoryEntry,
 		startClearHistory,
+		getStockHistoryFromDay,
 
 		// Status helpers
 		isSavingHistory: status === savingStatus,

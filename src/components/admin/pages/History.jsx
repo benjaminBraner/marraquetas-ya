@@ -1,52 +1,100 @@
-import React, { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Download, FileSpreadsheet } from 'lucide-react'
-import * as XLSX from 'xlsx'
 import { useStockHistoryStore } from '../../hooks/useStockHistoryStore'
 import './_History.scss'
 import { useAuthStore } from '../../hooks/useAuthStore'
+import { exportToExcel } from '../../helpers/exportToExcel'
+import { getTypeLabel } from '../../helpers/getTypeLabel'
+import { formatDate } from '../../helpers/formatDate'
+import { getWithdrawalTypeLabel } from '../../helpers/getWithdrawalTypeLabel'
+import { getTodayDate } from '../../helpers/getTodayDate'
+
+const todayDate = getTodayDate()
+
+// Función para formatear fecha al formato español
+const formatDateToSpanish = (dateString) => {
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ]
+    
+    const date = new Date(dateString + 'T00:00:00') // Añadir tiempo para evitar problemas de zona horaria
+    const day = date.getDate()
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
+    
+    return `${day} de ${month} de ${year}`
+}
 
 export const History = () => {
-	const { history } = useStockHistoryStore()
+	const { history, getStockHistoryFromDay } = useStockHistoryStore()
 	const [filter, setFilter] = useState('all')
 	const {role} = useAuthStore()
+	const [specificDayData, setSpecificDayData] = useState(null) // Estado para la data
+    const [isLoadingSpecificDay, setIsLoadingSpecificDay] = useState(false)
+    
+    const [selectedDate, setSelectedDate] = useState("")
+    const historyInUse = specificDayData || history
+    
+    console.log(selectedDate,specificDayData)
+
+	console.log("historyInUse", historyInUse)
 
 	// Calcular estadísticas finales
-	const finalStats = useMemo(() => {
-		let totalCash = 0
-		let currentStock = {}
-		let totalSales = 0
-		let totalWithdrawals = 0
+const finalStats = useMemo(() => {
+    let totalCash = 0
+    let currentStock = {}
+    let totalSales = 0
+    let totalWithdrawals = 0
 
-		history.forEach((entry) => {
-			entry.changes.forEach((change) => {
-				currentStock[change.productName] = change.newQuantity
-				if (entry.type === 'sale') {
-					totalSales += Math.abs(change.quantity || 0)
-					totalCash += change.total || 0
-				}
-				if (entry.type === 'withdrawal') {
-					totalWithdrawals += Math.abs(change.quantity || 0)
-				}
-			})
-		})
+    // ORDENAR PRIMERO por fecha para asegurar orden cronológico
+    const sortedHistory = [...historyInUse].sort((a, b) => new Date(a.date) - new Date(b.date))
 
-		const totalStockItems = Object.values(currentStock).reduce((sum, qty) => sum + qty, 0)
+    sortedHistory.forEach((entry) => {
+        entry.changes.forEach((change) => {
+            // Ahora sí podemos estar seguros de que el último valor es el más reciente
+            currentStock[change.productName] = change.newQuantity
+            if (entry.type === 'sale') {
+                totalSales += Math.abs(change.quantity || 0)
+                totalCash += change.total || 0
+            }
+            if (entry.type === 'withdrawal') {
+                totalWithdrawals += Math.abs(change.quantity || 0)
+            }
+        })
+    })
 
-		return {
-			totalStockItems,
-			totalCash,
-			totalSales,
-			totalWithdrawals,
-			currentStock
-		}
-	}, [history])
+    const totalStockItems = Object.values(currentStock).reduce((sum, qty) => sum + qty, 0)
+
+    return {
+        totalStockItems,
+        totalCash,
+        totalSales,
+        totalWithdrawals,
+        currentStock
+    }
+}, [historyInUse])
+	
+	
+	const handleDateChange = async(e) => {
+		const selectedDate = e.target.value
+		console.log(selectedDate)
+		setSelectedDate(selectedDate)
+		
+		const { entries = [] } = await getStockHistoryFromDay(selectedDate) || {}
+		
+     	setSpecificDayData(entries) 
+		
+	}
+	
+	
 
 	// Procesar historial: una fila por producto, con dinero acumulado
 	const processedHistory = useMemo(() => {
 		const rows = []
 
 		// Primero, crear todas las filas en orden cronológico normal (más antiguo primero)
-		const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date))
+		const sortedHistory = [...historyInUse].sort((a, b) => new Date(a.date) - new Date(b.date))
 		let runningCash = 0
 
 		sortedHistory.forEach((entry) => {
@@ -61,6 +109,7 @@ export const History = () => {
 					id: `${entry.date}-${changeIndex}`,
 					date: entry.date,
 					type: entry.type,
+					method: entry.method, // Agregar el método de pago
 					productName: change.productName,
 					quantity: change.quantity,
 					previousQuantity: change.previousQuantity,
@@ -81,7 +130,8 @@ export const History = () => {
 
 		// Luego invertir para mostrar más reciente primero
 		return rows.reverse()
-	}, [history])
+	}, [historyInUse])
+	
 
 	// Filtrar filas procesadas
 	const filteredRows = useMemo(() => {
@@ -92,27 +142,31 @@ export const History = () => {
 		})
 	}, [processedHistory, filter])
 
-	const formatDate = (dateString) => {
-		const date = new Date(dateString)
-		return date.toLocaleString('es-ES', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit'
-		})
-	}
-
-	const getTypeLabel = (type) => {
-		const labels = {
-			sale: 'Venta',
-			withdrawal: 'Retiro',
-			new: 'Nuevo',
-			addition: 'Stock+'
+	
+	// Función para obtener la clase CSS del método de pago
+	const getMethodBadgeClass = (method) => {
+		if (!method) return 'method-badge default'
+		
+		const classes = {
+			'Qr': 'method-badge qr',
+			'efectivo': 'method-badge cash',
+			'transferencia': 'method-badge transfer'
 		}
-		return labels[type] || type
+		return classes[method] || 'method-badge default'
 	}
 
+	// Función para formatear el texto del método
+	const formatMethodText = (method) => {
+		if (!method) return '-'
+		
+		const methodLabels = {
+			'Qr': 'QR',
+			'efectivo': 'Efectivo',
+			'transferencia': 'Transferencia'
+		}
+		return methodLabels[method] || method
+	}
+	
 	const getTypeBadgeClass = (type) => {
 		const classes = {
 			sale: 'badge-sale',
@@ -123,465 +177,17 @@ export const History = () => {
 		return `type-badge ${classes[type] || ''}`
 	}
 
-	const getWithdrawalTypeLabel = (withdrawalType) => {
-		const labels = {
-			lost: 'Perdido',
-			returned: 'Devuelto',
-			damaged: 'Dañado',
-			expired: 'Vencido'
-		}
-		return labels[withdrawalType] || withdrawalType
-	}
-
-	const getFilterLabel = (filterValue) => {
-		const labels = {
-			all: 'Todos_los_Registros',
-			sale: 'Ventas',
-			stock: 'Movimientos_de_Stock',
-			withdrawal: 'Retiros'
-		}
-		return labels[filterValue] || filterValue
-	}
-
-	// Función para exportar a Excel con estilos profesionales
-	const exportToExcel = () => {
-		try {
-			const now = new Date()
-			const timestamp = now.toLocaleString('es-ES', {
-				day: '2-digit',
-				month: '2-digit',
-				year: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit'
-			}).replace(/[/:]/g, '-').replace(',', '_')
-
-			const filterLabel = getFilterLabel(filter)
-			const fileName = `Historial_${filterLabel}_${timestamp}.xlsx`
-
-			// Crear workbook
-			const wb = XLSX.utils.book_new()
-
-			// Datos para la hoja principal
-			const wsData = []
-
-			// Header de empresa
-			wsData.push(['MARRAQUETAS YA - HISTORIAL DE MOVIMIENTOS'])
-			wsData.push([`Reporte generado: ${now.toLocaleString('es-ES')}`])
-			wsData.push([`Filtro aplicado: ${getFilterLabel(filter).replace('_', ' ')}`])
-			wsData.push([`Total de registros: ${filteredRows.length}`])
-			wsData.push([]) // Fila vacía
-
-			// Estadísticas resumen
-			wsData.push(['RESUMEN ESTADÍSTICO'])
-			wsData.push(['Stock Total Actual:', finalStats.totalStockItems, 'productos'])
-			wsData.push(['Caja Total:', `Bs. ${finalStats.totalCash}`])
-			wsData.push(['Total Productos Vendidos:', finalStats.totalSales])
-			wsData.push(['Total Productos Retirados:', finalStats.totalWithdrawals])
-			wsData.push([]) // Fila vacía
-
-			// Headers de la tabla
-			wsData.push([
-				'Fecha y Hora',
-				'Tipo de Movimiento',
-				'Producto',
-				'Cantidad',
-				'Stock Anterior',
-				'Stock Nuevo',
-				'Precio Unitario',
-				'Total Transacción',
-				'Caja Acumulada',
-				'Tipo de Retiro',
-				'ID Venta',
-				'Observaciones'
-			])
-
-			// Datos de la tabla
-			filteredRows.forEach(row => {
-				wsData.push([
-					formatDate(row.date),
-					getTypeLabel(row.type),
-					row.productName,
-					row.quantity,
-					row.previousQuantity || '-',
-					row.newQuantity || '-',
-					row.price || '',
-					row.total || '',
-					row.cumulativeCash,
-					row.withdrawalType ? getWithdrawalTypeLabel(row.withdrawalType) : '-',
-					row.saleId ? row.saleId.split('_')[2]?.slice(0, 8) : '-',
-					(row.reason && row.reason !== 'Sin observaciones') ? row.reason : '-'
-				])
-			})
-
-			// Crear worksheet
-			const ws = XLSX.utils.aoa_to_sheet(wsData)
-
-			// Configurar anchos de columnas optimizados
-			const colWidths = [
-				{ wch: 18 }, // Fecha y Hora
-				{ wch: 16 }, // Tipo
-				{ wch: 22 }, // Producto
-				{ wch: 10 }, // Cantidad
-				{ wch: 12 }, // Stock Anterior
-				{ wch: 12 }, // Stock Nuevo
-				{ wch: 14 }, // Precio
-				{ wch: 16 }, // Total
-				{ wch: 16 }, // Caja Acum
-				{ wch: 14 }, // Tipo Retiro
-				{ wch: 12 }, // ID Venta
-				{ wch: 28 }  // Observaciones
-			]
-			ws['!cols'] = colWidths
-
-			// === ESTILOS PROFESIONALES ===
-
-			// Estilo para el título principal (A1)
-			const mainTitleStyle = {
-				font: { 
-					bold: true, 
-					size: 16, 
-					color: { rgb: "FFFFFF" },
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "1F4E79" } // Azul marino profesional
-				},
-				alignment: { 
-					horizontal: "center", 
-					vertical: "center" 
-				},
-				border: {
-					top: { style: "thin", color: { rgb: "000000" } },
-					bottom: { style: "thin", color: { rgb: "000000" } },
-					left: { style: "thin", color: { rgb: "000000" } },
-					right: { style: "thin", color: { rgb: "000000" } }
-				}
-			}
-
-			// Estilo para información del reporte (A2:A4)
-			const infoStyle = {
-				font: { 
-					size: 11, 
-					color: { rgb: "404040" },
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "F2F2F2" } 
-				},
-				alignment: { 
-					horizontal: "left", 
-					vertical: "center" 
-				}
-			}
-
-			// Estilo para título de sección estadísticas
-			const sectionTitleStyle = {
-				font: { 
-					bold: true, 
-					size: 12, 
-					color: { rgb: "FFFFFF" },
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "70AD47" } // Verde
-				},
-				alignment: { 
-					horizontal: "center", 
-					vertical: "center" 
-				},
-				border: {
-					top: { style: "thin", color: { rgb: "000000" } },
-					bottom: { style: "thin", color: { rgb: "000000" } },
-					left: { style: "thin", color: { rgb: "000000" } },
-					right: { style: "thin", color: { rgb: "000000" } }
-				}
-			}
-
-			// Estilo para datos de estadísticas
-			const statsStyle = {
-				font: { 
-					size: 10, 
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "E2EFDA" } // Verde claro
-				},
-				alignment: { 
-					horizontal: "left", 
-					vertical: "center" 
-				}
-			}
-
-			// Estilo para headers de tabla
-			const tableHeaderStyle = {
-				font: { 
-					bold: true, 
-					size: 11, 
-					color: { rgb: "FFFFFF" },
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "4472C4" } // Azul Microsoft
-				},
-				alignment: { 
-					horizontal: "center", 
-					vertical: "center",
-					wrapText: true
-				},
-				border: {
-					top: { style: "thin", color: { rgb: "FFFFFF" } },
-					bottom: { style: "thin", color: { rgb: "FFFFFF" } },
-					left: { style: "thin", color: { rgb: "FFFFFF" } },
-					right: { style: "thin", color: { rgb: "FFFFFF" } }
-				}
-			}
-
-			// Estilo para datos de tabla (alternados)
-			const tableDataStyle1 = {
-				font: { 
-					size: 10, 
-					name: "Calibri"
-				},
-				fill: { 
-					fgColor: { rgb: "FFFFFF" } 
-				},
-				alignment: { 
-					horizontal: "center", 
-					vertical: "center" 
-				},
-				border: {
-					top: { style: "thin", color: { rgb: "D0D0D0" } },
-					bottom: { style: "thin", color: { rgb: "D0D0D0" } },
-					left: { style: "thin", color: { rgb: "D0D0D0" } },
-					right: { style: "thin", color: { rgb: "D0D0D0" } }
-				}
-			}
-
-			const tableDataStyle2 = {
-				...tableDataStyle1,
-				fill: { 
-					fgColor: { rgb: "F8F9FA" } // Gris muy claro alternado
-				}
-			}
-
-			// Estilo para números positivos (verde)
-			const positiveNumberStyle = {
-				...tableDataStyle1,
-				font: { 
-					size: 10, 
-					name: "Calibri",
-					color: { rgb: "00B050" }
-				}
-			}
-
-			// Estilo para números negativos (rojo)
-			const negativeNumberStyle = {
-				...tableDataStyle1,
-				font: { 
-					size: 10, 
-					name: "Calibri",
-					color: { rgb: "C5504B" }
-				}
-			}
-
-			// Aplicar estilos
-
-			// Título principal (merge A1:L1)
-			ws['!merges'] = [
-				{ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }, // Título principal
-				{ s: { r: 5, c: 0 }, e: { r: 5, c: 2 } }   // Título estadísticas
-			]
-			
-			// Aplicar estilo al título principal
-			if (ws['A1']) ws['A1'].s = mainTitleStyle
-
-			// Aplicar estilo a información del reporte
-			for (let row = 1; row <= 3; row++) {
-				const cellRef = XLSX.utils.encode_cell({ r: row, c: 0 })
-				if (ws[cellRef]) ws[cellRef].s = infoStyle
-			}
-
-			// Aplicar estilo al título de estadísticas
-			if (ws['A6']) ws['A6'].s = sectionTitleStyle
-
-			// Aplicar estilo a datos de estadísticas (filas 6-10)
-			for (let row = 6; row <= 10; row++) {
-				for (let col = 0; col <= 2; col++) {
-					const cellRef = XLSX.utils.encode_cell({ r: row, c: col })
-					if (ws[cellRef]) {
-						ws[cellRef].s = statsStyle
-						// Destacar valores numéricos
-						if (col === 1 && typeof ws[cellRef].v === 'number') {
-							ws[cellRef].s = {
-								...statsStyle,
-								font: {
-									...statsStyle.font,
-									bold: true,
-									color: { rgb: "1F4E79" }
-								}
-							}
-						}
-					}
-				}
-			}
-
-			// Aplicar estilo a headers de tabla (fila 11)
-			const tableHeaderRow = 11
-			for (let col = 0; col < 12; col++) {
-				const cellRef = XLSX.utils.encode_cell({ r: tableHeaderRow, c: col })
-				if (ws[cellRef]) {
-					ws[cellRef].s = tableHeaderStyle
-				}
-			}
-
-			// Aplicar estilos a datos de tabla
-			const dataStartRow = 12
-			for (let row = 0; row < filteredRows.length; row++) {
-				const currentRow = dataStartRow + row
-				const isEvenRow = row % 2 === 0
-				
-				for (let col = 0; col < 12; col++) {
-					const cellRef = XLSX.utils.encode_cell({ r: currentRow, c: col })
-					if (ws[cellRef]) {
-						let cellStyle = isEvenRow ? tableDataStyle1 : tableDataStyle2
-
-						// Estilos especiales por columna
-						if (col === 3) { // Columna de cantidad
-							const value = ws[cellRef].v
-							if (typeof value === 'number') {
-								cellStyle = value > 0 ? positiveNumberStyle : negativeNumberStyle
-							}
-						} else if (col === 1) { // Columna de tipo
-							// Diferentes colores según el tipo
-							const typeValue = ws[cellRef].v
-							if (typeValue === 'Venta') {
-								cellStyle = {
-									...cellStyle,
-									fill: { fgColor: { rgb: "E8F5E8" } },
-									font: { ...cellStyle.font, color: { rgb: "00B050" } }
-								}
-							} else if (typeValue === 'Retiro') {
-								cellStyle = {
-									...cellStyle,
-									fill: { fgColor: { rgb: "FFE8E8" } },
-									font: { ...cellStyle.font, color: { rgb: "C5504B" } }
-								}
-							}
-						} else if ([6, 7, 8].includes(col)) { // Columnas de dinero
-							cellStyle = {
-								...cellStyle,
-								font: { ...cellStyle.font, color: { rgb: "00B050" } }
-							}
-						}
-
-						ws[cellRef].s = cellStyle
-					}
-				}
-			}
-
-			// Formato de números para columnas de dinero
-			for (let row = dataStartRow; row < dataStartRow + filteredRows.length; row++) {
-				// Precio unitario
-				const priceCell = XLSX.utils.encode_cell({ r: row, c: 6 })
-				if (ws[priceCell] && typeof ws[priceCell].v === 'number') {
-					ws[priceCell].z = '"Bs. "#,##0.00'
-				}
-				
-				// Total transacción
-				const totalCell = XLSX.utils.encode_cell({ r: row, c: 7 })
-				if (ws[totalCell] && typeof ws[totalCell].v === 'number') {
-					ws[totalCell].z = '"Bs. "#,##0.00'
-				}
-				
-				// Caja acumulada
-				const cashCell = XLSX.utils.encode_cell({ r: row, c: 8 })
-				if (ws[cashCell] && typeof ws[cashCell].v === 'number') {
-					ws[cashCell].z = '"Bs. "#,##0.00'
-				}
-			}
-
-			// Agregar worksheet al workbook
-			XLSX.utils.book_append_sheet(wb, ws, 'Historial')
-
-			// === CREAR HOJA DE STOCK CON ESTILOS ===
-			if (Object.keys(finalStats.currentStock).length > 0) {
-				const stockData = [
-					['STOCK ACTUAL POR PRODUCTO'],
-					[`Actualizado: ${now.toLocaleString('es-ES')}`],
-					[],
-					['Producto', 'Cantidad en Stock', 'Estado']
-				]
-
-				Object.entries(finalStats.currentStock)
-					.sort(([a], [b]) => a.localeCompare(b))
-					.forEach(([product, quantity]) => {
-						const status = quantity > 10 ? 'Stock Normal' : quantity > 0 ? 'Stock Bajo' : 'Sin Stock'
-						stockData.push([product, quantity, status])
-					})
-
-				const stockWs = XLSX.utils.aoa_to_sheet(stockData)
-				stockWs['!cols'] = [{ wch: 28 }, { wch: 18 }, { wch: 15 }]
-
-				// Estilos para hoja de stock
-				stockWs['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }]
-				
-				// Título de stock
-				if (stockWs['A1']) {
-					stockWs['A1'].s = {
-						...mainTitleStyle,
-						fill: { fgColor: { rgb: "70AD47" } }
-					}
-				}
-
-				// Headers de stock
-				for (let col = 0; col < 3; col++) {
-					const cellRef = XLSX.utils.encode_cell({ r: 3, c: col })
-					if (stockWs[cellRef]) {
-						stockWs[cellRef].s = tableHeaderStyle
-					}
-				}
-
-				// Datos de stock con colores según cantidad
-				for (let row = 4; row < stockData.length; row++) {
-					for (let col = 0; col < 3; col++) {
-						const cellRef = XLSX.utils.encode_cell({ r: row, c: col })
-						if (stockWs[cellRef]) {
-							let cellStyle = row % 2 === 0 ? tableDataStyle1 : tableDataStyle2
-							
-							// Color según la cantidad de stock
-							if (col === 2) { // Columna de estado
-								const status = stockWs[cellRef].v
-								if (status === 'Stock Normal') {
-									cellStyle = { ...cellStyle, font: { ...cellStyle.font, color: { rgb: "00B050" } } }
-								} else if (status === 'Stock Bajo') {
-									cellStyle = { ...cellStyle, font: { ...cellStyle.font, color: { rgb: "FF8C00" } } }
-								} else {
-									cellStyle = { ...cellStyle, font: { ...cellStyle.font, color: { rgb: "C5504B" } } }
-								}
-							}
-							
-							stockWs[cellRef].s = cellStyle
-						}
-					}
-				}
-
-				XLSX.utils.book_append_sheet(wb, stockWs, 'Stock Actual')
-			}
-
-			// Descargar archivo
-			XLSX.writeFile(wb, fileName)
-
-			// Mostrar mensaje de éxito
-			console.log(`Excel profesional exportado: ${fileName}`)
-
-		} catch (error) {
-			console.error('Error al exportar Excel:', error)
-			alert('Error al generar el archivo Excel. Por favor intente nuevamente.')
-		}
-	}
 
 	return (
 		<div className="history-container">
+			<div className="date-stock-history-cont">
+				<input
+				type="date"
+				value={selectedDate}
+				onChange={handleDateChange}
+				/>
+				<p>{formatDateToSpanish(selectedDate || todayDate)}</p>
+		</div>
 			{/* Header con estadísticas */}
 			<div className="history-header">
 				<div className="stats-grid">
@@ -619,7 +225,7 @@ export const History = () => {
 				{
 					role === 'admin' && (
 								<button 
-									onClick={exportToExcel}
+									onClick={() => exportToExcel(filteredRows, filter, finalStats)}
 									className="export-excel-btn"
 									title="Exportar tabla a Excel"
 								>
@@ -640,6 +246,7 @@ export const History = () => {
 							<tr>
 								<th className="header-cell">Fecha & Hora</th>
 								<th className="header-cell">Tipo</th>
+								<th className="header-cell">Método</th>
 								<th className="header-cell">Producto</th>
 								<th className="header-cell">Cantidad</th>
 								<th className="header-cell">Stock</th>
@@ -656,6 +263,12 @@ export const History = () => {
 
 									<td className="table-cell cell-nowrap">
 										<span className={getTypeBadgeClass(row.type)}>{getTypeLabel(row.type)}</span>
+									</td>
+
+									<td className="table-cell cell-nowrap">
+										<span className={getMethodBadgeClass(row.method)}>
+											{formatMethodText(row.method)}
+										</span>
 									</td>
 
 									<td className="table-cell">

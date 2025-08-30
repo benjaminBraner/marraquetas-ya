@@ -20,15 +20,11 @@
   text-align: center;
 }
 
-.login-header {
-  margin-bottom: 30px;
-}
 
-.login-header h2 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 8px 0;
+
+.login-header img {
+  width: 120px;
+  border-radius: 50%;
 }
 
 .login-header p {
@@ -111,7 +107,7 @@
 .login-button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ff6f7b;
   border: none;
   border-radius: 10px;
   color: white;

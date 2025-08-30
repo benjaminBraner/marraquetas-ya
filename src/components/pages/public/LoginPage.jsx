@@ -37,8 +37,7 @@ const LoginPage = () => {
 		<div className="login-container">
 			<div className="login-card">
 				<div className="login-header">
-					<h2>MARRAQUETAS YA</h2>
-					<p>Ingresa tus credenciales para acceder</p>
+					<img src="/logo.png" alt="Logo" className="logo" />
 				</div>
 
 				<form onSubmit={handleSubmit} className="login-form">

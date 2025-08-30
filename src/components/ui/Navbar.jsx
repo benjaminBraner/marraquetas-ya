@@ -12,7 +12,7 @@ export const Navbar = ({ toggleSidebar }) => {
 					<Menu size={24} />
 				</button>
 				<div className="logo">
-					<span>MarraquetasYA!</span>
+					<span>Marraquetas Yaa!</span>
 				</div>
 				<div className="navbar-actions">
 					<span>{role}</span>

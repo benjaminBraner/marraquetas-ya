@@ -31,7 +31,8 @@ export function StockWithdrawal({
         return stockProducts.find(p => p.name === selectedProduct)
     }
 
-    const handleWithdraw = async () => {
+    const handleWithdraw = async (e) => {
+        e.preventDefault()
         if (!selectedProduct || !withdrawQuantity || withdrawQuantity <= 0) return
 
         const productData = getSelectedProductData()
@@ -225,7 +226,7 @@ export function StockWithdrawal({
                                 type="button"
                                 onClick={handleWithdraw} 
                                 disabled={!selectedProduct || !withdrawQuantity || withdrawQuantity <= 0 || stockStatus === 'saving'} 
-                                className={`btn btn-${selectedTypeData?.color || 'danger'}`}
+                                className={`btn btn-${selectedTypeData?.color || 'danger'} ${stockStatus === 'saving' ? 'disabled' : ''}`}
                             >
                                 <Check size={18} />
                                 {stockStatus === 'saving' 

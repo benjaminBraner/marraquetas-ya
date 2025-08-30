@@ -116,14 +116,15 @@ export function POS() {
 				paymentMethod,
 				itemsCount: cartItemsCount
 			}
-
+console.log(paymentMethod)
 			// Procesar en paralelo para mayor velocidad
 			const [savedSale] = await Promise.all([startAddSale(sale), ...cart.map((item) => startWithdrawStock(item.name, item.quantity))])
-
+			console.log(savedSale)
 			const historyEntry = {
 				type: 'sale',
 				description: `Venta realizada - ${cartItemsCount} productos`,
 				date: new Date().toISOString(),
+				method: paymentMethod,
 				changes: cart.map((item) => ({
 					productName: item.name,
 					quantity: -item.quantity,
@@ -157,7 +158,7 @@ export function POS() {
 	}
 
 	const paymentMethods = [
-		{ value: 'cash', label: 'Efectivo', icon: DollarSign, key: '1' },
+		{ value: 'efectivo', label: 'Efectivo', icon: DollarSign, key: '1' },
 		{ value: 'QR', label: 'QR', key: '3' }
 	]
 
