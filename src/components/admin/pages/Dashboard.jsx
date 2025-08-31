@@ -274,7 +274,7 @@ export const Dashboard = () => {
 					<div className="summary-cards">
 						<div className="card revenue">
 							<h3>Ingresos Totales</h3>
-							<p className="metric">{formatCurrency(analyzedData.totalRevenue)}</p>
+							<p className="metric">{analyzedData.totalRevenue}Bs</p>
 						</div>
 
 						<div className="card sales">
@@ -289,7 +289,7 @@ export const Dashboard = () => {
 
 						<div className="card average">
 							<h3>Venta Promedio</h3>
-							<p className="metric">{formatCurrency(analyzedData.averageSaleValue)}</p>
+							<p className="metric">{analyzedData.averageSaleValue}Bs</p>
 						</div>
 					</div>
 
@@ -297,25 +297,25 @@ export const Dashboard = () => {
 					<div className="highlight-section">
 						{analyzedData.topSellingProduct && (
 							<div className="card highlight top-product">
-								<h3>🏆 Producto Más Vendido</h3>
+								<h3>🏆 Más Vendido</h3>
 								<p className="product-name">{analyzedData.topSellingProduct[0]}</p>
 								<p className="quantity">{analyzedData.topSellingProduct[1]} unidades</p>
-								<p className="revenue">{formatCurrency(analyzedData.revenueByProduct[analyzedData.topSellingProduct[0]] || 0)}</p>
+								<p className="revenue">{analyzedData.revenueByProduct[analyzedData.topSellingProduct[0]] || 0}Bs</p>
 							</div>
 						)}
 
 						{analyzedData.leastSellingProduct && (
 							<div className="card highlight least-product">
-								<h3>📉 Producto Menos Vendido</h3>
+								<h3>📉 Menos Vendido</h3>
 								<p className="product-name">{analyzedData.leastSellingProduct[0]}</p>
 								<p className="quantity">{analyzedData.leastSellingProduct[1]} unidades</p>
-								<p className="revenue">{formatCurrency(analyzedData.revenueByProduct[analyzedData.leastSellingProduct[0]] || 0)}</p>
+								<p className="revenue">{analyzedData.revenueByProduct[analyzedData.leastSellingProduct[0]] || 0}Bs</p>
 							</div>
 						)}
 
 						{analyzedData.mostWithdrawnProduct && (
 							<div className="card highlight withdrawn-product">
-								<h3>📦 Producto Más Retirado</h3>
+								<h3>📦 Más Retirado</h3>
 								<p className="product-name">{analyzedData.mostWithdrawnProduct[0]}</p>
 								<p className="quantity">{analyzedData.mostWithdrawnProduct[1]} retiros</p>
 							</div>
@@ -374,10 +374,10 @@ export const Dashboard = () => {
 														<strong>{stats.quantitySold}</strong> vendidos
 													</span>
 													<span className="metric-item">
-														<strong>{formatCurrency(stats.revenue)}</strong> ingresos
+														<strong>{stats.revenue}Bs</strong> ingresos
 													</span>
 													<span className="metric-item">
-														<strong>{formatCurrency(stats.averagePrice)}</strong> precio prom.
+														<strong>{stats.averagePrice}Bs</strong> precio prom.
 													</span>
 													<span className="metric-item">
 														<strong>{stats.withdrawals}</strong> retiros
@@ -426,7 +426,7 @@ export const Dashboard = () => {
 											<h4>{date}</h4>
 											<div className="daily-metrics">
 												<span>Ventas: {stats.salesCount}</span>
-												<span>Ingresos: {formatCurrency(stats.totalRevenue)}</span>
+												<span>Ingresos: {stats.totalRevenue}Bs</span>
 												<span>Productos: {stats.totalSales}</span>
 											</div>
 										</div>
