@@ -19,8 +19,9 @@ export function POS() {
 	// Estados locales
 	const [cart, setCart] = useState([])
 	const [searchTerm, setSearchTerm] = useState('')
-	const [paymentMethod, setPaymentMethod] = useState('cash')
+	const [paymentMethod, setPaymentMethod] = useState('efectivo')
 	const [isProcessing, setIsProcessing] = useState(false)
+	const [paidAmount, setPaidAmount] = useState('') // Nuevo estado para el monto pagado
 
 	// Productos disponibles para venta (solo los que tienen stock)
 	const availableProducts = useMemo(() => {
@@ -34,7 +35,7 @@ export function POS() {
 					price: product?.unitPrice || 0,
 					prices: product?.prices || [],
 					priceType: product?.priceType,
-					category: product?.category || 'Sin categoría',
+					category: product?.category || 'Sin categorÃ­a',
 					image: product?.image || '',
 					id: product?.id || productName
 				}
@@ -86,17 +87,43 @@ export function POS() {
 		setCart(cart.map((item) => (item.name === productName ? { ...item, quantity: newQuantity } : item)))
 	}
 
+	const handleQuantityInputChange = (productName, value) => {
+		// Si el valor está vacío, permitir que el input esté vacío temporalmente
+		if (value === '') {
+			// Actualizar el carrito con valor vacío (temporalmente)
+			setCart(cart.map((item) => (item.name === productName ? { ...item, quantity: '' } : item)))
+			return
+		}
+
+		const numValue = parseInt(value)
+		if (isNaN(numValue) || numValue < 0) return
+
+		updateCartQuantity(productName, numValue)
+	}
+
 	const removeFromCart = (productName) => {
 		setCart(cart.filter((item) => item.name !== productName))
 	}
 
 	const clearCart = () => {
 		setCart([])
+		setPaidAmount('') // Limpiar también el monto pagado
 	}
 
 	// Cálculos del carrito
-	const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
-	const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
+const cartTotal = cart.reduce((total, item) => {
+	const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 0
+	return total + (item.price * quantity)
+}, 0)
+
+const cartItemsCount = cart.reduce((total, item) => {
+	const quantity = typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 0
+	return total + quantity
+}, 0)
+
+	// Cálculo del cambio
+	const paidAmountNum = parseFloat(paidAmount) || 0
+	const changeAmount = paidAmountNum - cartTotal
 
 	// Procesar venta optimizada
 	const processSale = async () => {
@@ -116,7 +143,7 @@ export function POS() {
 				paymentMethod,
 				itemsCount: cartItemsCount
 			}
-console.log(paymentMethod)
+			console.log(paymentMethod)
 			// Procesar en paralelo para mayor velocidad
 			const [savedSale] = await Promise.all([startAddSale(sale), ...cart.map((item) => startWithdrawStock(item.name, item.quantity))])
 			console.log(savedSale)
@@ -125,15 +152,17 @@ console.log(paymentMethod)
 				description: `Venta realizada - ${cartItemsCount} productos`,
 				date: new Date().toISOString(),
 				method: paymentMethod,
-				changes: cart.map((item) => ({
-					productName: item.name,
-					quantity: -item.quantity,
-					previousQuantity: item.stock,
-					newQuantity: item.stock - item.quantity,
-					price: item.price,
-					total: item.price * item.quantity,
-					saleId: savedSale.id
-				}))
+				changes: cart
+					.filter((item) => item.quantity > 0)
+					.map((item) => ({
+						productName: item.name,
+						quantity: -item.quantity,
+						previousQuantity: item.stock,
+						newQuantity: item.stock - item.quantity,
+						price: item.price,
+						total: item.price * item.quantity,
+						saleId: savedSale.id
+					}))
 			}
 
 			await startAddHistoryEntry(historyEntry)
@@ -161,6 +190,13 @@ console.log(paymentMethod)
 		{ value: 'efectivo', label: 'Efectivo', icon: DollarSign, key: '1' },
 		{ value: 'QR', label: 'QR', key: '3' }
 	]
+	
+	const handleQuantityBlur = (productName, value) => {
+	if (value === '' || parseInt(value) <= 0) {
+		// Si está vacío o es 0, establecer cantidad mínima de 1
+		updateCartQuantity(productName, 1)
+	}
+}
 
 	return (
 		<div className="pos-container-split" onKeyDown={handleKeyPress} tabIndex="0">
@@ -168,11 +204,11 @@ console.log(paymentMethod)
 			<div className="pos-header-compact">
 				<div className="pos-title-compact">
 					<div className="header-actions">
-					<button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
-						<History size={18} />
-						Historial
-					</button>
-				</div>
+						<button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
+							<History size={18} />
+							Historial
+						</button>
+					</div>
 				</div>
 
 				<div className="pos-stats-compact">
@@ -208,13 +244,13 @@ console.log(paymentMethod)
 									{/* Imagen del producto */}
 									<div className="product-image-container">
 										{product.image ? (
-											<img 
-												src={product.image} 
+											<img
+												src={product.image}
 												alt={product.name}
 												className="product-image"
 												onError={(e) => {
-													e.target.style.display = 'none';
-													e.target.nextSibling.style.display = 'flex';
+													e.target.style.display = 'none'
+													e.target.nextSibling.style.display = 'flex'
 												}}
 											/>
 										) : null}
@@ -267,13 +303,13 @@ console.log(paymentMethod)
 									{/* Imagen en el carrito también */}
 									<div className="cart-item-image">
 										{item.image ? (
-											<img 
-												src={item.image} 
+											<img
+												src={item.image}
 												alt={item.name}
 												className="cart-image"
 												onError={(e) => {
-													e.target.style.display = 'none';
-													e.target.nextSibling.style.display = 'flex';
+													e.target.style.display = 'none'
+													e.target.nextSibling.style.display = 'flex'
 												}}
 											/>
 										) : null}
@@ -291,7 +327,16 @@ console.log(paymentMethod)
 										<button onClick={() => updateCartQuantity(item.name, item.quantity - 1)} className="qty-btn minus">
 											<Minus size={12} />
 										</button>
-										<span className="quantity-display">{item.quantity}</span>
+										<input 
+											type="number" 
+											value={item.quantity} 
+											onChange={(e) => handleQuantityInputChange(item.name, e.target.value)} 
+											onBlur={(e) => handleQuantityBlur(item.name, e.target.value)}
+											className="quantity-input" 
+											min="1" 
+											max={item.stock} 
+											onClick={(e) => e.stopPropagation()} 
+										/>
 										<button onClick={() => updateCartQuantity(item.name, item.quantity + 1)} className="qty-btn plus">
 											<Plus size={12} />
 										</button>
@@ -321,6 +366,27 @@ console.log(paymentMethod)
 								})}
 							</div>
 
+							{/* Cálculo de pago y cambio */}
+							{paymentMethod === 'efectivo' && (
+								<div className="payment-calculation">
+									<div className="payment-input-group">
+										<label>Pagó con:</label>
+										<input type="number" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} placeholder="Monto recibido" className="payment-input" step="0.01" min="0" />
+									</div>
+									{paidAmount && paidAmountNum >= cartTotal && (
+										<div className="change-display">
+											<span className="change-label">Su cambio es:</span>
+											<span className="change-amount">Bs.{changeAmount.toFixed(2)}</span>
+										</div>
+									)}
+									{paidAmount && paidAmountNum < cartTotal && (
+										<div className="insufficient-payment">
+											<span>Falta: Bs.{(cartTotal - paidAmountNum).toFixed(2)}</span>
+										</div>
+									)}
+								</div>
+							)}
+
 							{/* Total y botón de venta */}
 							<div className="total-section-fast">
 								<div className="total-display">
@@ -345,8 +411,7 @@ console.log(paymentMethod)
 					Procesando venta...
 				</div>
 			)}
-			
-			
+
 			{/* Modal de Historial */}
 			{showHistoryModal && (
 				<div className="modal-overlay">

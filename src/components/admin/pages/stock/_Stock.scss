@@ -368,7 +368,7 @@
   flex-shrink: 0;
 }
 
-.product-info {
+.stock-container .product-info {
   flex: 1;
 }
 
@@ -640,7 +640,7 @@
     gap: 16px;
   }
   
-  .product-info {
+ .stock-container .product-info {
     width: 100%;
   }
   

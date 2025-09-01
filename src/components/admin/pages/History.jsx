@@ -252,7 +252,7 @@ const finalStats = useMemo(() => {
 								<th className="header-cell">Stock</th>
 								<th className="header-cell">Precio Unit.</th>
 								<th className="header-cell">Total</th>
-								<th className="header-cell">Caja Acum.</th>
+								<th className="header-cell">Caja</th>
 								<th className="header-cell">Detalles</th>
 							</tr>
 						</thead>

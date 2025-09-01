@@ -289,7 +289,7 @@ export const Dashboard = () => {
 
 						<div className="card average">
 							<h3>Venta Promedio</h3>
-							<p className="metric">{analyzedData.averageSaleValue}Bs</p>
+							<p className="metric">{analyzedData.averageSaleValue.toFixed(2)}Bs</p>
 						</div>
 					</div>
 
