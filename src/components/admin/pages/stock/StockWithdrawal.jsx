@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Package2, AlertTriangle, RotateCcw, X, Check, Minus } from 'lucide-react'
+import { Package2, AlertTriangle, RotateCcw, X, Check, Minus, Loader } from 'lucide-react'
 import './_StockWithdrawal.scss'
 
 export function StockWithdrawal({ 
@@ -11,10 +11,12 @@ export function StockWithdrawal({
 }) {
     const [selectedProduct, setSelectedProduct] = useState('')
     const [withdrawQuantity, setWithdrawQuantity] = useState('')
-    const [withdrawalType, setWithdrawalType] = useState('damaged') // 'damaged', 'returned', 'expired', 'lost'
+    const [withdrawalType, setWithdrawalType] = useState('damaged')
     const [reason, setReason] = useState('')
+    
+    // Estado local para manejar el loading del botón específicamente
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Opciones de tipos de retiro
     const withdrawalTypes = [
         { value: 'damaged', label: 'Producto Dañado', icon: AlertTriangle, color: 'danger' },
         { value: 'returned', label: 'Devolución', icon: RotateCcw, color: 'warning' },
@@ -33,6 +35,10 @@ export function StockWithdrawal({
 
     const handleWithdraw = async (e) => {
         e.preventDefault()
+        
+        // Prevenir múltiples clics
+        if (isSubmitting || stockStatus === 'saving') return
+        
         if (!selectedProduct || !withdrawQuantity || withdrawQuantity <= 0) return
 
         const productData = getSelectedProductData()
@@ -55,17 +61,29 @@ export function StockWithdrawal({
             newStock: currentStock - quantityToWithdraw
         }
 
+        // Activar estado de carga local inmediatamente
+        setIsSubmitting(true)
+
         try {
             await onWithdrawStock(withdrawalData)
             
-            // Limpiar formulario
+            // Limpiar formulario solo si fue exitoso
             setSelectedProduct('')
             setWithdrawQuantity('')
             setReason('')
             setWithdrawalType('damaged')
             
+            // Cerrar modal automáticamente tras éxito
+            setTimeout(() => {
+                onClose()
+            }, 500) // Pequeño delay para mostrar el éxito
+            
         } catch (error) {
             console.error('Error al retirar stock:', error)
+            // Podrías mostrar un mensaje de error específico aquí
+        } finally {
+            // Desactivar estado de carga
+            setIsSubmitting(false)
         }
     }
 
@@ -74,9 +92,13 @@ export function StockWithdrawal({
         setWithdrawQuantity('')
         setReason('')
         setWithdrawalType('damaged')
+        setIsSubmitting(false)
     }
 
     const handleClose = () => {
+        // No permitir cerrar mientras se está procesando
+        if (isSubmitting || stockStatus === 'saving') return
+        
         resetForm()
         onClose()
     }
@@ -85,22 +107,40 @@ export function StockWithdrawal({
     const selectedProductData = getSelectedProductData()
     const maxQuantity = selectedProductData ? selectedProductData.stock : 0
 
+    // Estados de carga combinados
+    const isLoading = isSubmitting || stockStatus === 'saving'
+    const canSubmit = selectedProduct && withdrawQuantity && withdrawQuantity > 0 && !isLoading
+
     if (!isVisible) return null
 
     return (
         <div className="modal-overlay">
-            <div className="modal withdrawal-modal">
+            <div className={`modal withdrawal-modal ${isLoading ? 'processing' : ''}`}>
                 <div className="modal-header">
-                    <h3 className="modal-title">
+                    <h3 className="modal-title" style={{color: '#fff'}}>
                         <Package2 size={20} />
                         Retirar Productos del Stock
                     </h3>
-                    <button className="btn-close" onClick={handleClose}>
+                    <button 
+                        className="btn-close" 
+                        onClick={handleClose}
+                        disabled={isLoading}
+                    >
                         <X size={20} />
                     </button>
                 </div>
 
                 <div className="modal-body">
+                    {/* Overlay de carga */}
+                    {isLoading && (
+                        <div className="loading-overlay">
+                            <div className="loading-spinner">
+                                <Loader size={24} className="spinner" />
+                                <span>Procesando retiro...</span>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="withdrawal-form">
                         
                         {/* Selector de tipo de retiro */}
@@ -115,7 +155,7 @@ export function StockWithdrawal({
                                             type="button"
                                             className={`withdrawal-type-btn ${withdrawalType === type.value ? 'active' : ''} ${type.color}`}
                                             onClick={() => setWithdrawalType(type.value)}
-                                            disabled={stockStatus === 'saving'}
+                                            disabled={isLoading}
                                         >
                                             <IconComponent size={18} />
                                             {type.label}
@@ -132,11 +172,11 @@ export function StockWithdrawal({
                                 value={selectedProduct} 
                                 onChange={(e) => setSelectedProduct(e.target.value)} 
                                 className="form-select"
-                                disabled={stockStatus === 'saving'}
+                                disabled={isLoading}
                             >
                                 <option value="">Seleccionar producto</option>
                                 {stockProducts
-                                    .filter(product => product.stock > 0) // Solo productos con stock
+                                    .filter(product => product.stock > 0)
                                     .map((product) => (
                                         <option key={product.name} value={product.name}>
                                             {product.name} - Stock: {product.stock} ({product.category})
@@ -164,7 +204,7 @@ export function StockWithdrawal({
                                 value={withdrawQuantity} 
                                 onChange={(e) => setWithdrawQuantity(e.target.value)} 
                                 className="form-input"
-                                disabled={stockStatus === 'saving' || !selectedProduct}
+                                disabled={isLoading || !selectedProduct}
                             />
                         </div>
 
@@ -179,7 +219,7 @@ export function StockWithdrawal({
                                 value={reason} 
                                 onChange={(e) => setReason(e.target.value)} 
                                 className="form-textarea"
-                                disabled={stockStatus === 'saving'}
+                                disabled={isLoading}
                                 rows="3"
                             />
                         </div>
@@ -218,21 +258,31 @@ export function StockWithdrawal({
                                 type="button"
                                 onClick={handleClose} 
                                 className="btn btn-secondary"
-                                disabled={stockStatus === 'saving'}
+                                disabled={isLoading}
                             >
                                 Cancelar
                             </button>
                             <button 
                                 type="button"
                                 onClick={handleWithdraw} 
-                                disabled={!selectedProduct || !withdrawQuantity || withdrawQuantity <= 0 || stockStatus === 'saving'} 
-                                className={`btn btn-${selectedTypeData?.color || 'danger'} ${stockStatus === 'saving' ? 'disabled' : ''}`}
+                                disabled={!canSubmit} 
+                                className={`btn btn-${selectedTypeData?.color || 'danger'} ${!canSubmit ? 'disabled' : ''}`}
+                                style={{
+                                    pointerEvents: !canSubmit ? 'none' : 'auto',
+                                    opacity: !canSubmit ? 0.6 : 1
+                                }}
                             >
-                                <Check size={18} />
-                                {stockStatus === 'saving' 
-                                    ? 'Procesando...' 
-                                    : `Confirmar ${selectedTypeData?.label}`
-                                }
+                                {isLoading ? (
+                                    <>
+                                        <Loader size={18} className="spinner" />
+                                        Procesando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check size={18} />
+                                        Confirmar {selectedTypeData?.label}
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

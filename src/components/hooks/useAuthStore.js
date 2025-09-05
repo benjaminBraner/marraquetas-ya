@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { checkingCredentials, login, logout } from "../store/slices/authSlice"
 import { loginWithEmailPassword, logoutFirebase } from "../../firebase/providers"
 import { getUserRole } from "../helpers/getUserRole"
+import toast from "react-hot-toast"
 
 export const useAuthStore = () => {
 	
@@ -19,16 +20,20 @@ export const useAuthStore = () => {
 				
 				if (userRole === role) {
 					dispatch(login({...result, role: userRole}))
+					toast.success('Inicio de sesion exitoso')
 				} else {
 					startLogout('El rol del usuario no es el correcto')
+					toast.error('El rol del usuario no es el correcto')
 				}
 				
 			} else {
-					startLogout(result.message)
+				startLogout(result.message)
+				toast.error('Error al iniciar sesion')
 			}
 		} catch (error) {
 			console.log(error)
 			startLogout(error.message)
+			toast.error('Error al iniciar sesion')
 		}
 	}
 	

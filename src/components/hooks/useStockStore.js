@@ -22,7 +22,7 @@ export const useStockStore = () => {
 	// ✅ AGREGAR/ACTUALIZAR stock por nombre de producto
 	const startAddStockToday = async (productName, quantity) => {
 		dispatch(setStatus(savingStatus))
-		
+
 		try {
 			const today = getTodayDate()
 			const stockDocRef = doc(FirestoreDB, `stock/${today}`)
@@ -38,7 +38,6 @@ export const useStockStore = () => {
 
 			console.log(`✅ Stock de "${productName}" actualizado: ${quantity}`)
 			dispatch(setStatus(idleStatus))
-			
 		} catch (error) {
 			console.error('Error agregando stock:', error)
 			dispatch(setStatus(errorStatus))
@@ -48,7 +47,7 @@ export const useStockStore = () => {
 	// ✅ SUMAR a stock existente por nombre
 	const startAddToExistingStock = async (productName, quantityToAdd) => {
 		dispatch(setStatus(savingStatus))
-		
+
 		try {
 			const today = getTodayDate()
 			const stockDocRef = doc(FirestoreDB, `stock/${today}`)
@@ -67,7 +66,6 @@ export const useStockStore = () => {
 
 			console.log(`✅ "${productName}": ${currentStock} + ${quantityToAdd} = ${newQuantity}`)
 			dispatch(setStatus(idleStatus))
-			
 		} catch (error) {
 			console.error('Error:', error)
 			dispatch(setStatus(errorStatus))
@@ -77,7 +75,7 @@ export const useStockStore = () => {
 	// ✅ REMOVER producto del stock por nombre
 	const startRemoveFromStock = async (productName) => {
 		dispatch(setStatus(savingStatus))
-		
+
 		try {
 			const today = getTodayDate()
 			const stockDocRef = doc(FirestoreDB, `stock/${today}`)
@@ -88,7 +86,6 @@ export const useStockStore = () => {
 
 			console.log(`🗑️ "${productName}" removido del stock`)
 			dispatch(setStatus(idleStatus))
-			
 		} catch (error) {
 			console.error('Error:', error)
 			dispatch(setStatus(errorStatus))
@@ -98,7 +95,7 @@ export const useStockStore = () => {
 	// ✅ ACTUALIZAR cantidad específica por nombre
 	const startUpdateStock = async (productName, newQuantity) => {
 		dispatch(setStatus(savingStatus))
-		
+
 		try {
 			const today = getTodayDate()
 			const stockDocRef = doc(FirestoreDB, `stock/${today}`)
@@ -113,51 +110,47 @@ export const useStockStore = () => {
 
 			console.log(`✅ "${productName}" actualizado a: ${newQuantity}`)
 			dispatch(setStatus(idleStatus))
-			
 		} catch (error) {
 			console.error('Error:', error)
 			dispatch(setStatus(errorStatus))
 		}
 	}
-	
+
 	const startWithdrawStock = async (productName, quantityToWithdraw) => {
-    dispatch(setStatus(savingStatus))
-    
-    try {
-        const today = getTodayDate()
-        const stockDocRef = doc(FirestoreDB, `stock/${today}`)
+		dispatch(setStatus(savingStatus))
 
-        // Obtener stock actual del Redux
-        const currentStock = getCurrentQuantity(productName)
-        const newQuantity = Math.max(0, currentStock - quantityToWithdraw) // No permitir negativos
+		try {
+			const today = getTodayDate()
+			const stockDocRef = doc(FirestoreDB, `stock/${today}`)
 
-        if (newQuantity === 0) {
-            // Si queda en 0, eliminar el producto del documento
-            await updateDoc(stockDocRef, {
-                [productName]: deleteField()
-            })
-        } else {
-            // Actualizar con la nueva cantidad
-            await setDoc(
-                stockDocRef,
-                {
-                    [productName]: newQuantity
-                },
-                { merge: true }
-            )
-        }
+			// Obtener stock actual del Redux
+			const currentStock = getCurrentQuantity(productName)
+			const newQuantity = Math.max(0, currentStock - quantityToWithdraw) // No permitir negativos
 
-        console.log(`✅ "${productName}": ${currentStock} - ${quantityToWithdraw} = ${newQuantity}`)
-        dispatch(setStatus(idleStatus))
-        
-    } catch (error) {
-        console.error('Error retirando stock:', error)
-        dispatch(setStatus(errorStatus))
-        throw error // Re-throw para manejo en el componente
-    }
+			if (newQuantity === 0) {
+				// Si queda en 0, eliminar el producto del documento
+				await updateDoc(stockDocRef, {
+					[productName]: deleteField()
+				})
+			} else {
+				// Actualizar con la nueva cantidad
+				await setDoc(
+					stockDocRef,
+					{
+						[productName]: newQuantity
+					},
+					{ merge: true }
+				)
+			}
+
+			console.log(`✅ "${productName}": ${currentStock} - ${quantityToWithdraw} = ${newQuantity}`)
+			dispatch(setStatus(idleStatus))
+		} catch (error) {
+			console.error('Error retirando stock:', error)
+			dispatch(setStatus(errorStatus))
+			throw error // Re-throw para manejo en el componente
+		}
 	}
-	
-	
 
 	// ✅ Helpers para trabajar con el formato { productName: quantity }
 	const getProductStock = (productName) => {

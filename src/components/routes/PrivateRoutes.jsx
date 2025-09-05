@@ -12,8 +12,6 @@ export const PrivateRoutes = () => {
 	// 🔥 Usa el hook para sincronización automática
 	useFirebaseSync()
 	
-	// Ya no necesitas el useEffect manual ni getProducts
-	// El hook se encarga de mantener Redux actualizado automáticamente
 	
 	return (
 		<>
